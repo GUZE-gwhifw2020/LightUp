@@ -10,19 +10,21 @@ function [mat, height, width, blackInd] = luTokenResolve(tokStr)
 
 % Example
 % tokStr = 'a1h0b2h2a3aBh2bBh1a';
-% height = 7
-% width = 7
+% height = 9
+% width = 9
 % mat = 
-%     -2     1    -2    -2    -2    -2    -2
-%     -2    -2    -2     0    -2    -2     2
-%     -2    -2    -2    -2    -2    -2    -2
-%     -2     2    -2     3    -2    -1    -2
-%     -2    -2    -2    -2    -2    -2    -2
-%      2    -2    -2    -1    -2    -2    -2
-%     -2    -2    -2    -2    -2     1    -2
+%     -1    -1    -1    -1    -1    -1    -1    -1    -1
+%     -1    -2     1    -2    -2    -2    -2    -2    -1
+%     -1    -2    -2    -2     0    -2    -2     2    -1
+%     -1    -2    -2    -2    -2    -2    -2    -2    -1
+%     -1    -2     2    -2     3    -2    -1    -2    -1
+%     -1    -2    -2    -2    -2    -2    -2    -2    -1
+%     -1     2    -2    -2    -1    -2    -2    -2    -1
+%     -1    -2    -2    -2    -2    -2     1    -2    -1
+%     -1    -1    -1    -1    -1    -1    -1    -1    -1
 
 % blackInd = 
-%      8    23    44    11    25     6 
+%       20    39    66    23    41    16    62
 
 utypeBlc    = -1;
 utypeUnn    = -2;
@@ -49,13 +51,20 @@ mat = utypeUnn * ones([width height]);  % 后续转置恢复正常
 mat(blackInd(1:end-1)) = brickDig;
 mat = transpose(mat);
 
+% 进行周边延拓
+width = width + 2;
+height = height + 2;
+rowAdd = repmat(utypeBlc, [1 width-2]);
+colAdd = repmat(utypeBlc, [height 1]);
+mat = cat(2, colAdd, cat(1, rowAdd, mat, rowAdd), colAdd);
+
 if(nargout > 3)
     % 只保留数字黑格
     blackInd = blackInd(brickDig ~= utypeBlc);
     
     % 重新转置
-    [row,col] = ind2sub([width height],blackInd);
-    blackInd = sub2ind([height width], col, row);
+    [row,col] = ind2sub([width-2 height-2],blackInd);
+    blackInd = sub2ind([height width], col + 1, row + 1);
 end
 
 end
