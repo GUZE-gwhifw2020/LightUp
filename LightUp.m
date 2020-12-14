@@ -124,7 +124,7 @@ classdef LightUp
                 indT = find(obj.colPairs{col}(:,2) >= row, 1,'first');
                 obj.mat(obj.colPairs{col}(indT,1):obj.colPairs{col}(indT,2), col) = obj.utypeLit;
                 % 连续行设置Lit属性
-                indT = find(obj.rowPairs{row}(:,1) >= col, 1,'first');
+                indT = find(obj.rowPairs{row}(:,2) >= col, 1,'first');
                 obj.mat(row, obj.rowPairs{row}(indT,1):obj.rowPairs{row}(indT,2)) = obj.utypeLit;
                 % 自己设置为Lamp属性
                 obj.mat(lampInd) = obj.utypeLamp;
@@ -132,10 +132,35 @@ classdef LightUp
         end
         
         function matS = matSGet(obj, matInd)
-           %MATSGET 返回四周状态
-           
-           % 获取状态
-           matS = obj.mat(matInd + obj.indS4);
+            %MATSGET 返回四周状态
+            
+            % 获取状态
+            matS = obj.mat(matInd + obj.indS4);
+        end
+        
+        function Display(obj)
+            % 关闭已有图窗
+            try
+                close('LightUp')
+            catch ME
+                if(~strcmp(ME.identifier, 'MATLAB:close:WindowNotFound'))
+                    rethrow(ME)
+                end
+            end
+            % 新建图窗
+            h = figure('Name', 'LightUp');
+            hold on
+            
+            % 绘制黑格
+            spy(obj.mat >= obj.utypeBlc, 'sk');
+            % 绘制灯
+            spy(obj.mat == obj.utypeLamp, 30, '.r');
+            % 绘制点亮区域
+            spy(obj.mat == obj.utypeLit, 30, '.y');
+            
+            % 绘制网格
+            
+            
         end
     end
 end
