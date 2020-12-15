@@ -32,7 +32,6 @@ classdef LightUp
         blackInd    % 数字黑格下标
         blackDig    % 黑格数字
         
-        addLampInd  % 待加入灯下标(行向量)
     end
     
     methods
@@ -60,10 +59,7 @@ classdef LightUp
             obj.rowPairs = cell(obj.height, 1);
             obj.colPairs = cell(obj.width, 1);
             obj = obj.initRCPairs();
-            
-            % 待加入灯下标
-            obj.addLampInd = [];
-            
+
         end
         
         function obj = Genesis(obj)
@@ -113,7 +109,7 @@ classdef LightUp
             b1 = b2 | b3;
             if(nnz(b1) == digit)
                 % 周边可填位置等于数字 -> 可填位置放置灯
-                obj.addLampInd = cat(2, obj.addLampInd, matInd + obj.indS4(b1));
+                obj = obj.addLamp(matInd + obj.indS4(b1));
             elseif(nnz(b2) == digit)
                 % 周围灯数等于数字 -> 剩余位置设置不可放属性
                 obj.mat(matInd + obj.indS4(~b2)) = obj.utypeNLmp;
@@ -141,10 +137,11 @@ classdef LightUp
             
         end
         
-        function obj = addLamp(obj)
+        function obj = addLamp(obj, lampIndA)
             %ADDLAMP 添加灯
-            
-            for lampInd = obj.addLampInd
+            % Input:
+            %       lampIndA    : 灯在矩阵中下标向量
+            for lampInd = lampIndA
                 if(obj.mat(lampInd) == obj.utypeLamp)
                     continue
                 end
@@ -190,9 +187,24 @@ classdef LightUp
             
             % 绘制不可填充
             spy(obj.mat == obj.utypeNLmp,'xm');
+            
             % 绘制网格
+            for ii = 1:obj.height - 1
+                yline(ii + 0.5,'Color',[0.1 0.1 0.1]);
+            end
+            for ii = 1:obj.width - 1
+                xline(ii + 0.5,'Color',[0.1 0.1 0.1]);
+            end
             
+            % 窗口大小
+            axis([1.5 obj.height-0.5 1.5 obj.height-0.5]);
             
+            % 图例
+            legend('黑格','灯','点亮区域','不可填充',...
+                'Location','northeastoutside');
+            
+            % 标签
+            xlabel('');
         end
     end
 end

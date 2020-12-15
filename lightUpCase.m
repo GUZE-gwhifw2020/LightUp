@@ -14,3 +14,5 @@ X = LightUp(strToken);
 
 %%
 X = X.Genesis();
+
+X.Display();
