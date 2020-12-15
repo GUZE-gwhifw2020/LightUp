@@ -65,13 +65,24 @@ classdef LightUp
         function obj = Genesis(obj)
             %GENESIS 求解工程
             
-            % 每一个数字黑格处理
-            for ind = 1:length(obj.blackInd)
-                obj = obj.checkBlack(ind);
+            for iter = 1:1
+                % 每一个数字黑格处理
+                for ind = 1:length(obj.blackInd)
+                    obj = obj.checkBlack(ind);
+                end
+                
+                % 每一个行列条带处理
+                for ii = 2:obj.width-1
+                    for kk = 1:size(obj.colPairs{ii},1)
+                        obj = obj.checkColPairs(ii,kk);
+                    end
+                end
+                for ii = 2:obj.height-1
+                    for kk = 1:size(obj.rowPairs{ii},1)
+                        obj = obj.checkRowPairs(ii,kk);
+                    end
+                end
             end
-            
-            % 每一个行列条带处理
-            
         end
         
         function obj = initRCPairs(obj)
@@ -163,6 +174,26 @@ classdef LightUp
             
             % 获取状态
             matS = obj.mat(matInd + obj.indS4);
+        end
+        
+        function obj = checkColPairs(obj, colInd, ind)
+            %CHECKCOLPAIRS 确定第colInd列的第ind个pair是否更新
+            pair = obj.colPairs{colInd}(ind,1:2);
+            arr = obj.mat(pair(1):pair(2),colInd) == obj.utypeUnn;
+            if(nnz(arr) == 1)
+                obj = obj.addLamp(sub2ind([obj.height obj.width], ...
+                    find(arr, 1, 'first') - 1 + pair(1), colInd));
+            end
+        end
+        
+        function obj = checkRowPairs(obj, rowInd, ind)
+            %CHECKROWPAIRS 确定第rowInd行的第ind个pair是否更新
+            pair = obj.rowPairs{rowInd}(ind,1:2);
+            arr = obj.mat(rowInd, pair(1):pair(2)) == obj.utypeUnn;
+            if(nnz(arr) == 1)
+                obj = obj.addLamp(sub2ind([obj.height obj.width], ...
+                    rowInd, find(arr, 1, 'first') - 1 + pair(1)));
+            end
         end
         
         function Display(obj)
