@@ -66,7 +66,7 @@ classdef LightUp
         function obj = Genesis(obj)
             %GENESIS 求解工程
             
-            for iter = 1:3
+            for iter = 1:7
                 % 每一个数字黑格处理
                 for ind = 1:length(obj.blackInd)
                     obj = obj.checkBlack(ind);
@@ -134,33 +134,46 @@ classdef LightUp
             b3 = (matS == obj.utypeUnn);
             % 可填位置 - 布尔型
             b1 = b2 | b3;
+            
+            % 
+            indBiasA = [];
+            
             if(nnz(b1) == digit)
                 % 周边可填位置等于数字 -> 可填位置放置灯
                 obj = obj.addLamp(matInd + obj.indS4(b1));
             elseif(nnz(b2) == digit)
                 % 周围灯数等于数字 -> 剩余位置设置不可放属性
-                obj.mat(matInd + obj.indS4(~b2)) = obj.utypeNLmp;
+                % obj.mat(matInd + obj.indS4(~b2)) = obj.utypeNLmp;
+                indBiasA = obj.indS4(~b2);
             elseif(nnz(b3) - digit + nnz(b2) == 1)
                 % 残留可填位置数 - 残留灯数 = 1
                 % 四个顶角判断
                 switch(nnz(b3))
                     case{4}
-                        obj.mat(matInd + obj.indA4) = obj.utypeNLmp;
+                        % obj.mat(matInd + obj.indA4) = obj.utypeNLmp;
+                        indBiasA = obj.indA4;
                     case{3}
                         % 残留位置中空元素
                         indDir = find(~b3,1,'first');
                         % 转换为待写入两个方向
                         indDir = mod(indDir + [0 1],4) + 1;
-                        obj.mat(matInd + obj.indA4(indDir)) = obj.utypeNLmp;
+                        % obj.mat(matInd + obj.indA4(indDir)) = obj.utypeNLmp;
+                        indBiasA = obj.indA4(indDir);
                     case{2}
                         % 不能为水平型，即不能为(1,3)或(2,4)
                         if(any(b3 & b3([4 1 2 3])))
                             % 待写入一个方向
                             indDir = find(b3,1,'last') - 1;
-                            obj.mat(matInd + obj.indA4(indDir)) = obj.utypeNLmp;
+                            % obj.mat(matInd + obj.indA4(indDir)) = obj.utypeNLmp;
+                            indBiasA = obj.indA4(indDir);
                         end
                 end
             end
+            
+            indBiasA = matInd + indBiasA;
+            indBiasA(obj.mat(indBiasA) ~= obj.utypeUnn) = [];
+            
+            obj.mat(indBiasA) = obj.utypeNLmp;
             
         end
         
@@ -218,7 +231,9 @@ classdef LightUp
                 
                 % 2. 寻找该空列的Cross所在的行中是否无Unn
                 J2 = false;
-                for rowIndT = find(obj.mat(span(1):span(2), colInd) == obj.utypeNLmp) - 1 + span(1)
+                rowIndTA = find(obj.mat(span(1):span(2), colInd) == obj.utypeNLmp) - 1 + span(1);
+                for iter = 1:length(rowIndTA)
+                    rowIndT = rowIndTA(iter);
                     spanT = obj.colPairs(1:2, obj.rowPairInd(rowIndT, colInd));
                     if(all(obj.mat(rowIndT, spanT(1):spanT(2)) ~= obj.utypeUnn))
                         J2 = true;
@@ -250,7 +265,9 @@ classdef LightUp
                 
                 % 2. 寻找该空行的Cross所在列中是否无Unn
                 J2 = false;
-                for colIndT = find(obj.mat(rowInd, span(1):span(2)) == obj.utypeNLmp) - 1 + span(1)
+                colIndTA = find(obj.mat(rowInd, span(1):span(2)) == obj.utypeNLmp) - 1 + span(1);
+                for iter = 1:length(colIndTA)
+                    colIndT = colIndTA(iter);
                     spanT = obj.rowPairs(1:2, obj.colPairInd(rowInd, colIndT));
                     if(all(obj.mat(spanT(1):spanT(2), colIndT) ~= obj.utypeUnn))
                         J2 = true;

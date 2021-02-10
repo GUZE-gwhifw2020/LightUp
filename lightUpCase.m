@@ -9,7 +9,11 @@
 
 %%
 % strToken = input('    输入Token:','s');
-strToken = 'a1h0b2h2a3aBh2bBh1a';
+strToken = input('== ', 's');
+if(isempty(strToken))
+    strToken = 'a1h0b2h2a3aBh2bBh1a';
+end
+
 X = LightUp(strToken);
 
 %%
