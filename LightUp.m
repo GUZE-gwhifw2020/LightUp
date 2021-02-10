@@ -53,8 +53,8 @@ classdef LightUp
             obj.indS4(obj.dirD) = 1;
             obj.indS4(obj.dirL) = -obj.height;
             obj.indS4(obj.dirR) = obj.height;
-            obj.indA4 = reshape([-obj.height obj.height] + [-1;1], [1 4]);
-            
+            % obj.indA4 = reshape([-obj.height obj.height] + [-1;1], [1 4]);
+            obj.indA4 = [-obj.height-1 -obj.height+1 obj.height+1 obj.height-1];
             % 黑格数字
             obj.blackDig = obj.mat(obj.blackInd);
             
@@ -66,7 +66,7 @@ classdef LightUp
         function obj = Genesis(obj)
             %GENESIS 求解工程
             
-            for iter = 1:7
+            for iter = 1:100
                 % 每一个数字黑格处理
                 for ind = 1:length(obj.blackInd)
                     obj = obj.checkBlack(ind);
@@ -226,15 +226,15 @@ classdef LightUp
                 rowInd = rowInd - 1 + span(1);
                 
                 % 1. 对应连续空行中Unn个数是否为1
-                span = obj.rowPairs(:, obj.rowPairInd(rowInd, colInd));
-                J1 = (nnz(obj.mat(rowInd, span(1):span(2)) == obj.utypeUnn) == 1);
+                spanT = obj.rowPairs(:, obj.rowPairInd(rowInd, colInd));
+                J1 = (nnz(obj.mat(rowInd, spanT(1):spanT(2)) == obj.utypeUnn) == 1);
                 
                 % 2. 寻找该空列的Cross所在的行中是否无Unn
                 J2 = false;
                 rowIndTA = find(obj.mat(span(1):span(2), colInd) == obj.utypeNLmp) - 1 + span(1);
                 for iter = 1:length(rowIndTA)
                     rowIndT = rowIndTA(iter);
-                    spanT = obj.colPairs(1:2, obj.rowPairInd(rowIndT, colInd));
+                    spanT = obj.rowPairs(1:2, obj.rowPairInd(rowIndT, colInd));
                     if(all(obj.mat(rowIndT, spanT(1):spanT(2)) ~= obj.utypeUnn))
                         J2 = true;
                         break;
@@ -260,17 +260,18 @@ classdef LightUp
                 colInd = colInd - 1 + span(1);
                 
                 % 1. 对应列中Unn个数是否为1
-                span = obj.colPairs(:, obj.colPairInd(rowInd, colInd));
-                J1 = (nnz(obj.mat(span(1):span(2), colInd) == obj.utypeUnn) == 1);
+                spanT = obj.colPairs(:, obj.colPairInd(rowInd, colInd));
+                J1 = (nnz(obj.mat(spanT(1):spanT(2), colInd) == obj.utypeUnn) == 1);
                 
                 % 2. 寻找该空行的Cross所在列中是否无Unn
                 J2 = false;
                 colIndTA = find(obj.mat(rowInd, span(1):span(2)) == obj.utypeNLmp) - 1 + span(1);
                 for iter = 1:length(colIndTA)
                     colIndT = colIndTA(iter);
-                    spanT = obj.rowPairs(1:2, obj.colPairInd(rowInd, colIndT));
+                    spanT = obj.colPairs(1:2, obj.colPairInd(rowInd, colIndT));
                     if(all(obj.mat(spanT(1):spanT(2), colIndT) ~= obj.utypeUnn))
                         J2 = true;
+                        break
                     end
                 end
                 
@@ -302,10 +303,10 @@ classdef LightUp
             
             % 绘制网格
             for ii = 1:obj.height - 1
-                yline(ii + 0.5,'Color',[0.1 0.1 0.1]);
+                yline(ii + 0.5,'Color',[0 0 0], 'LineWidth', 2);
             end
             for ii = 1:obj.width - 1
-                xline(ii + 0.5,'Color',[0.1 0.1 0.1]);
+                xline(ii + 0.5,'Color',[0 0 0], 'LineWidth', 2);
             end
             
             % 窗口大小
