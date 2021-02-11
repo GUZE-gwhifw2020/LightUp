@@ -53,7 +53,6 @@ classdef LightUp
             obj.indS4(obj.dirD) = 1;
             obj.indS4(obj.dirL) = -obj.height;
             obj.indS4(obj.dirR) = obj.height;
-            % obj.indA4 = reshape([-obj.height obj.height] + [-1;1], [1 4]);
             obj.indA4 = [-obj.height-1 -obj.height+1 obj.height+1 obj.height-1];
             % 黑格数字
             obj.blackDig = obj.mat(obj.blackInd);
@@ -66,7 +65,7 @@ classdef LightUp
         function obj = Genesis(obj)
             %GENESIS 求解工程
             
-            for iter = 1:100
+            for iter = 1:10
                 % 每一个数字黑格处理
                 for ind = 1:length(obj.blackInd)
                     obj = obj.checkBlack(ind);
@@ -74,10 +73,10 @@ classdef LightUp
                 
                 % 每一个行列条带处理
                 for ii = 1:size(obj.rowPairs, 2)
-                    obj = obj.checkColPairs(ii);
+                    obj = obj.checkRowPairs(ii);
                 end
                 for ii = 1:size(obj.colPairs, 2)
-                    obj = obj.checkRowPairs(ii);
+                    obj = obj.checkColPairs(ii);
                 end
             end
         end
@@ -143,30 +142,29 @@ classdef LightUp
                 obj = obj.addLamp(matInd + obj.indS4(b1));
             elseif(nnz(b2) == digit)
                 % 周围灯数等于数字 -> 剩余位置设置不可放属性
-                % obj.mat(matInd + obj.indS4(~b2)) = obj.utypeNLmp;
                 indBiasA = obj.indS4(~b2);
             elseif(nnz(b3) - digit + nnz(b2) == 1)
                 % 残留可填位置数 - 残留灯数 = 1
                 % 四个顶角判断
                 switch(nnz(b3))
                     case{4}
-                        % obj.mat(matInd + obj.indA4) = obj.utypeNLmp;
                         indBiasA = obj.indA4;
                     case{3}
                         % 残留位置中空元素
                         indDir = find(~b3,1,'first');
                         % 转换为待写入两个方向
                         indDir = mod(indDir + [0 1],4) + 1;
-                        % obj.mat(matInd + obj.indA4(indDir)) = obj.utypeNLmp;
                         indBiasA = obj.indA4(indDir);
                     case{2}
                         % 不能为水平型，即不能为(1,3)或(2,4)
-                        if(any(b3 & b3([4 1 2 3])))
-                            % 待写入一个方向
-                            indDir = find(b3,1,'last') - 1;
-                            % obj.mat(matInd + obj.indA4(indDir)) = obj.utypeNLmp;
-                            indBiasA = obj.indA4(indDir);
-                        end
+                        % 可以理解为一条4单元链中存在2相邻位置黑色，
+                        % 2相对位置不同色，将链条旋转90度相与判断
+                        
+                        % 待写入一个方向
+                        indDir = find(b3 & b3([4 1 2 3]), 1, 'first');
+                        indDir = mod(indDir - 2, 4) + 1;
+                        indBiasA = obj.indA4(indDir);
+                        
                 end
             end
             
@@ -292,14 +290,30 @@ classdef LightUp
             hold on
             
             % 绘制黑格
-            spy(obj.mat >= obj.utypeBlc, 'sk');
+            % spy(obj.mat >= obj.utypeBlc, 'sk');
+            blcIndT = find(obj.mat >= obj.utypeBlc);
+            for iter = 1:length(blcIndT)
+                [row, col] = ind2sub(size(obj.mat), blcIndT(iter));
+                rectangle('Position', [col-0.5,row-0.5,1,1], 'FaceColor', 'k');
+            end
+            for iter = 1:length(obj.blackInd)
+                [row, col] = ind2sub(size(obj.mat), obj.blackInd(iter));
+                text(col, row, int2str(obj.blackDig(iter)), ...
+                    'Color', 'w', ...
+                    'HorizontalAlignment', 'center', ...
+                    'VerticalAlignment', 'middle', ...
+                    'FontName', 'Arial');
+            end
+            
             % 绘制灯
             spy(obj.mat == obj.utypeLamp, 30, '.r');
             % 绘制点亮区域
             spy(obj.mat == obj.utypeLit, 30, '.y');
             
             % 绘制不可填充
-            spy(obj.mat == obj.utypeNLmp,'xm');
+            spy(obj.mat == obj.utypeNLmp, 8, 'xm');
+            
+            
             
             % 绘制网格
             for ii = 1:obj.height - 1
@@ -309,12 +323,12 @@ classdef LightUp
                 xline(ii + 0.5,'Color',[0 0 0], 'LineWidth', 2);
             end
             
-            % 窗口大小
-            axis([1.5 obj.height-0.5 1.5 obj.height-0.5]);
-            
             % 图例
-            legend('黑格','灯','点亮区域','不可填充',...
+            legend({'Lamp','Lit','NoLamp'},...
                 'Location','northeastoutside');
+            
+            % 窗口大小
+            axis([1.5 obj.width-0.5 1.5 obj.height-0.5]);
             
             % 标签
             xlabel('');
